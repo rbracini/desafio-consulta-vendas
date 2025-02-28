@@ -3,6 +3,7 @@ package com.devsuperior.dsmeta.services;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.devsuperior.dsmeta.dto.SaleMinDTO;
 import com.devsuperior.dsmeta.dto.SaleReportDTO;
+import com.devsuperior.dsmeta.dto.SaleSummaryDTO;
 import com.devsuperior.dsmeta.entities.Sale;
 import com.devsuperior.dsmeta.repositories.SaleRepository;
 
@@ -27,22 +29,19 @@ public class SaleService {
 		return new SaleMinDTO(entity);
 	}
 
-	public Page<SaleReportDTO> searchSale(Pageable pageable, String minDate, String maxDate, String sellerName) {
-
-		LocalDate maxLocalDate = LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault());
-		LocalDate minLocalDate = maxLocalDate.minusYears(1L);
-
-		if (minDate != null && !minDate.isEmpty()) {
-			minLocalDate = LocalDate.parse(minDate);
-		}
-
-		if (maxDate != null && !maxDate.isEmpty()) {
-			maxLocalDate = LocalDate.parse(maxDate);
-		}
-
-		// return repository.searchSale(pageable, minLocalDate, maxLocalDate,
-		// sellerName).map(SaleReportDTO::new);
-		return repository.searchReportSale(pageable, minLocalDate, maxLocalDate, sellerName);
+	public Page<SaleReportDTO> searchReportSale(Pageable pageable, String minDate, String maxDate, String sellerName) {
+		LocalDate max = parseDateOrDefault(maxDate, LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault()));
+		LocalDate min = parseDateOrDefault(minDate, max.minusYears(1));
+		return repository.searchReportSale(pageable, min, max, sellerName);
 	}
 
+	public List<SaleSummaryDTO> searchSummarySale(String minDate, String maxDate) {
+		LocalDate max = parseDateOrDefault(maxDate, LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault()));
+		LocalDate min = parseDateOrDefault(minDate, max.minusYears(1));
+		return repository.searchSummarySale(min, max);
+	}
+
+	private LocalDate parseDateOrDefault(String date, LocalDate defaultValue) {
+		return (date != null && !date.isEmpty()) ? LocalDate.parse(date) : defaultValue;
+	}
 }
